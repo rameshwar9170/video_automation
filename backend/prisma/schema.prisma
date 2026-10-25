@@ -1,0 +1,138 @@
+// Prisma Schema — AI YouTube Automation Platform
+// Provider: SQLite for zero-configuration, robust local execution without Docker/PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// ─── Channel Settings ──────────────────────────────────────────────────────
+
+model ChannelSettings {
+  id             String   @id @default(cuid())
+  channelName    String?
+  youtubeChannelId String? @unique
+  niche          String   @default("AI & Technology")
+  language       String   @default("English")
+  region         String   @default("Global")
+  videosPerDay   Int      @default(2)
+  preferredTimes String?  @default("[\"01:00\", \"13:00\"]")
+  style          String   @default("Informative")
+  tone           String   @default("Engaging")
+  targetAudience String   @default("Tech enthusiasts")
+  durationMin    Int      @default(30)
+  durationMax    Int      @default(60)
+  autoPublish    Boolean  @default(false)
+  autoResearch   Boolean  @default(true)
+  aiProvider     String   @default("gemini")
+  voiceProvider  String   @default("elevenlabs")
+  visualProvider String   @default("imagen")
+  retryLimit     Int      @default(3)
+  qualityThreshold Int    @default(70)
+  storageType    String   @default("local")
+
+  // YouTube OAuth
+  youtubeRefreshToken String?
+  youtubeConnected    Boolean @default(false)
+
+  autonomousModeEnabled Boolean @default(false)
+  schedulerNextRun      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("channel_settings")
+}
+
+// ─── Topics ────────────────────────────────────────────────────────────────
+
+model Topic {
+  id          String      @id @default(cuid())
+  topic       String
+  status      String      @default("CANDIDATE") // CANDIDATE, SELECTED, REJECTED, USED
+  sourceData  String?     // JSON serialized
+  freshness   Float?      // 0-100
+  interest    Float?
+  videoPotential Float?
+  informationAvailable Float?
+  originality Float?
+  risk        Float?
+  score       Float?      // composite score
+  selectedAt  DateTime?
+  usedAt      DateTime?
+  createdAt   DateTime    @default(now())
+
+  research    Research[]
+  videos      Video[]
+
+  @@map("topics")
+}
+
+// ─── Research ──────────────────────────────────────────────────────────────
+
+model Research {
+  id          String   @id @default(cuid())
+  topicId     String
+  source      String
+  url         String?
+  title       String
+  summary     String
+  publishedAt DateTime?
+  content     String
+  topicSignals String? // JSON serialized string[]
+  createdAt   DateTime @default(now())
+
+  topic       Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@map("research")
+}
+
+// ─── Videos ────────────────────────────────────────────────────────────────
+
+model Video {
+  id              String      @id @default(cuid())
+  topicId         String?
+  status          String      @default("RESEARCHING")
+
+  // Script data
+  hook            String?
+  script          String?
+  scenes          String?     // JSON serialized Scene[]
+
+  // File paths
+  videoPath       String?
+  audioPath       String?
+  thumbnailPath   String?
+
+  // Metadata
+  title           String?
+  description     String?
+  hashtags        String?     // JSON serialized string[]
+  tags            String?     // JSON serialized string[]
+
+  // Quality
+  qualityScore    Float?
+  qualityIssues   String?     // JSON serialized
+
+  // YouTube
+  youtubeVideoId  String?
+  publishedAt     DateTime?
+
+  // Retry tracking
+  retryCount      Int         @default(0)
+  errorMessage    String?
+
+  // Progress (0-100)
+  progress        Int         @default(0)
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  topic           Topic?      @relation(fields: [topicId], references: [id])
+
+  @@map("videos")
+}

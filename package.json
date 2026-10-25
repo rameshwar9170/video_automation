@@ -1,0 +1,17 @@
+{
+  "name": "ai-youtube-automation",
+  "version": "1.0.0",
+  "description": "Autonomous AI YouTube Shorts Automation Platform",
+  "private": true,
+  "scripts": {
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build:backend": "npm --prefix backend run build",
+    "build:frontend": "npm --prefix frontend run build",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "prisma:generate": "npm --prefix backend run prisma:generate",
+    "prisma:push": "npm --prefix backend run prisma:push",
+    "prisma:studio": "npm --prefix backend run prisma:studio"
+  }
+}
